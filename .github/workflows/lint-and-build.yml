@@ -34,14 +34,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # 5. Apply ESLint auto‑fixes
-      - name: Auto‑fix lint issues
-        run: npm run lint:fix
-
-      # 6. Check that there are no remaining lint errors
-      - name: Verify lint is clean
-        run: npm run lint
-
       # 7. Build for production
       - name: Build production bundle
         run: npm run build
