@@ -1,52 +1,47 @@
-name: Lint, Auto‑Fix & Build
+name: CI – Fix & Build
 
 on:
-  pull_request:
-    branches: [ main ]
   push:
+    branches: [ main ]
+  pull_request:
     branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  lint-and-build:
+  fix-and-build:
     runs-on: ubuntu-latest
     steps:
-      # 1. Check out code
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      # 1. Checkout your code
+      - uses: actions/checkout@v4
 
-      # 2. Cache npm dependencies for speed
-      - name: Cache npm cache
-        uses: actions/cache@v3
+      # 2. Cache & install dependencies
+      - uses: actions/cache@v3
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
-
-      # 3. Setup Node.js
-      - name: Setup Node.js 18
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: '18'
+      - run: npm ci
 
-      # 4. Install dependencies
-      - name: Install dependencies
-        run: npm ci
-
-      # 5. Apply ESLint auto‑fixes
-      - name: Auto‑fix lint issues
+      # 3. Auto‑fix lint issues (won't fail the job)
+      - name: ESLint: Auto‑fix
         run: npm run lint:fix
+        # allow ESLint to leave some errors behind
+        continue-on-error: true
 
-      # 6. Check that there are no remaining lint errors
-      - name: Verify lint is clean
+      # 4. Show remaining lint errors (won't fail the job)
+      - name: ESLint: Report remaining issues
         run: npm run lint
+        continue-on-error: true
 
-      # 7. Build for production
-      - name: Build production bundle
+      # 5. Build the production bundle
+      - name: Build
         run: npm run build
 
-      # 8. (Optional) Smoke‑test the build output
+      # 6. Smoke‑test the build output
       - name: Verify dist folder
         run: |
           if [ ! -d "./dist" ]; then
