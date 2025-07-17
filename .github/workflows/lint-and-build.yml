@@ -1,0 +1,55 @@
+name: Lint, Auto‑Fix & Build
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Check out code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Cache npm dependencies for speed
+      - name: Cache npm cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # 3. Setup Node.js
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # 4. Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # 5. Apply ESLint auto‑fixes
+      - name: Auto‑fix lint issues
+        run: npm run lint:fix
+
+      # 6. Check that there are no remaining lint errors
+      - name: Verify lint is clean
+        run: npm run lint
+
+      # 7. Build for production
+      - name: Build production bundle
+        run: npm run build
+
+      # 8. (Optional) Smoke‑test the build output
+      - name: Verify dist folder
+        run: |
+          if [ ! -d "./dist" ]; then
+            echo "❌ dist/ directory is missing!"
+            exit 1
+          fi
